@@ -1,3 +1,14 @@
+function Generate-RandomPassword {
+    param (
+        [int]$minLength = 10,
+        [int]$maxLength = 20
+    )
+
+    $length = Get-Random -Minimum $minLength -Maximum $maxLength
+    $password = -join ((33..126) | ForEach-Object { [char]$_ } | Get-Random -Count $length)
+    return $password
+}
+
 function EncryptText {
     param (
         [string]$password,
@@ -76,7 +87,7 @@ function Decrypt-File {
     $Text = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BinStr)
     $Text | Out-File $filePath -Encoding utf8 -NoNewline
     Write-Host "The file has been successfully decrypted."
-}
+}       
 
 function Process-Folder {
     param (
@@ -117,7 +128,7 @@ function Show-Menu {
     Write-Host "----------------------------------------------------------" 
 }
 
-function Validate-Input {
+function ValidateInput {
     param (
         [string]$_input,
         [string]$message
@@ -135,26 +146,37 @@ do {
 
     switch ($choice) {
         '1' {
-            $password = Read-Host "Enter password"
-            if (-not (Validate-Input -input $password -message "Password cannot be empty.")) { continue }
+            $password = Read-Host "Enter password (pesss enter to auto-generate)"
+            if (-not $password) {
+                $password = Generate-RandomPassword
+                Write-Host "Auto-generated Password: $password`n" -ForegroundColor Yellow
+                Start-Sleep 1
+            }
+
             $text = Read-Host "Enter text to encrypt"
-            if (-not (Validate-Input -input $text -message "Text cannot be empty.")) { continue }
+            if (-not (ValidateInput -_input $text -message "Text cannot be empty.")) { continue }
             $encryptedText = EncryptText -password $password -text $text
             Write-Host "Encrypted Text: $encryptedText`n" -ForegroundColor Green
         }
         '2' {
             $password = Read-Host "Enter password"
-            if (-not (Validate-Input -input $password -message "Password cannot be empty.")) { continue }
+            if (-not (ValidateInput -_input $password -message "password cannot be empty.")) { continue }
             $encryptedText = Read-Host "Enter text to decrypt"
-            if (-not (Validate-Input -input $encryptedText -message "Encrypted text cannot be empty.")) { continue }
+            if (-not (ValidateInput -_input $encryptedText -message "Encrypted text cannot be empty.")) { continue }
             $decryptedText = Decrypt-Text -password $password -encryptedText $encryptedText
             Write-Host "Decrypted Text: $decryptedText`n" -ForegroundColor Green
         }
         '3' {
-            $password = Read-Host "Enter password"
-            if (-not (Validate-Input -input $password -message "Password cannot be empty.")) { continue }
+            $password = Read-Host "Enter password (pesss enter to auto-generate)"
+            if (-not $password) {
+                $password = Generate-RandomPassword
+                Write-Host "Auto-generated Password: $password`n" -ForegroundColor Yellow
+                Start-Sleep 1
+            }
+
+            if (-not (ValidateInput -_input $password -message "Password cannot be empty.")) { continue }
             $filePath = Read-Host "Enter input file path"
-            if (-not (Validate-Input -input $filePath -message "File path cannot be empty.")) { continue }
+            if (-not (ValidateInput -_input $filePath -message "File path cannot be empty.")) { continue }
             try {
                 Encrypt-File -password $password -filePath $filePath
                 Write-Host "File encrypted successfully.`n" -ForegroundColor Green
@@ -165,9 +187,10 @@ do {
         }
         '4' {
             $password = Read-Host "Enter password"
-            if (-not (Validate-Input -input $password -message "Password cannot be empty.")) { continue }
+            if (-not (ValidateInput -_input $password -message "password cannot be empty.")) { continue }
+            if (-not (ValidateInput -_input $password -message "Password cannot be empty.")) { continue }
             $filePath = Read-Host "Enter input file path"
-            if (-not (Validate-Input -input $filePath -message "File path cannot be empty.")) { continue }
+            if (-not (ValidateInput -_input $filePath -message "File path cannot be empty.")) { continue }
             try {
                 Decrypt-File -password $password -filePath $filePath
                 Write-Host "File decrypted successfully.`n" -ForegroundColor Green
@@ -177,10 +200,16 @@ do {
             }
         }
         '5' {
-            $password = Read-Host "Enter password"
-            if (-not (Validate-Input -input $password -message "Password cannot be empty.")) { continue }
+            $password = Read-Host "Enter password (pesss enter to auto-generate)"
+            if (-not $password) {
+                $password = Generate-RandomPassword
+                Write-Host "Auto-generated Password: $password`n" -ForegroundColor Yellow
+                Start-Sleep 1
+            }
+
+            if (-not (ValidateInput -_input $password -message "Password cannot be empty.")) { continue }
             $folderPath = Read-Host "Enter folder path"
-            if (-not (Validate-Input -input $folderPath -message "Folder path cannot be empty.")) { continue }
+            if (-not (ValidateInput -_input $folderPath -message "Folder path cannot be empty.")) { continue }
 
             Write-Host "`nChoose an action for all files in the folder:`n" -ForegroundColor Cyan
             Write-Host "1: Encrypt all files"
@@ -218,4 +247,7 @@ do {
             Write-Host "Invalid option. Please try again." -ForegroundColor Red
         }
     }
+    Write-Host "`nPress any key to continue..." -ForegroundColor Yellow
+    [void][System.Console]::ReadKey($true)
+
 } while ($choice -ne '6')
